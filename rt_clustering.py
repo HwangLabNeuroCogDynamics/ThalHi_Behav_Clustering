@@ -4,6 +4,27 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import scipy.cluster.hierarchy as sch
+import os
+import numpy as np
+from numpy import average, std
+import pickle
+from numpy.random import random, randint, normal, shuffle,uniform
+import scipy
+from scipy import sparse
+from scipy.stats import ttest_ind
+from scipy.spatial.distance import pdist
+from scipy.cluster.hierarchy import dendrogram,linkage
+from scipy.stats.mstats import zscore
+import seaborn as sns
+import fnmatch
+import os  # handy system and path functions
+import sys  # to get file system encoding
+import csv
+from pandas import DataFrame, read_csv
+import matplotlib.pyplot as plt
+import pandas as pd
+import matplotlib
+import mne
 
 ROOT='/data/backed_up/shared/ThalHi_data/eeg_preproc/'
 print(os.listdir(ROOT))
@@ -103,6 +124,7 @@ def rt_cluster(inputdf):
     Subjects = inputdf['sub'].astype('int').unique()
     mat = np.zeros((8,8))
     subN = np.zeros((8,8))
+    amat = np.zeros((8,8))
     for s in Subjects:
         df = inputdf.loc[inputdf['sub'] == s]
         df = df.reset_index()
@@ -141,19 +163,25 @@ def rt_cluster(inputdf):
         smat = transitionRTs/trialN
         smat[np.isnan(smat)] = np.nanmean(smat)
         smat = (smat - np.nanmean(smat)) / np.nanstd(smat)
-        #subM = np.ones((8,8))
-        #subM[np.isnan(smat)]=0
-        #subN = subN + subM
-        #mat = mat + smat
+        subaM = np.ones((8,8))
+        subaM[np.isnan(smat)]=0
+        subN = subN + subaM
+        amat = amat + smat
         #stack subjects
         mat = np.hstack((mat,smat))
-    #mat = mat / subN
 
-    return mat
+    amat = amat / subN
+
+    return mat, amat
+
+# heatmap
+
 
 ## cluster the transitional RT matrix to see what conditions group together. We can do kmeans or dendrogram, or modularity
-mat = rt_cluster(fdf)
+mat,amat = rt_cluster(cdf)
 
+sns.heatmap(amat, center = 0, cmap = "vlag")
+plt.show()
 # modularity
 # import bct
 # mat = mat -np.min(mat)
